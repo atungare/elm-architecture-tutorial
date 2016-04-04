@@ -15,37 +15,41 @@ init = { counters = [],
          nextId = 0 }
 
 -- Update
-type Action = Insert | Remove | Modify ID Counter.Action
+type Action = Insert | Remove ID | Modify ID Counter.Action
 
 update : Action -> Model -> Model
 update action model =
   case action of
     Insert ->
-      let newCounter = ( model.nextId, Counter.init 0 )
-          newCounterList = model.counters ++ [ newCounter ]
-      in
-        { model | counters = newCounterList, nextId = model.nextId + 1}
-    Remove ->
-      { model | counters = List.drop 1 model.counters }
+      { model |
+          counters = ( model.nextId, Counter.init 0 ) :: model.counters,
+          nextId = model.nextId + 1 }
+    Remove id ->
+      { model |
+          counters = List.filter (\(counterId, _) -> id /= counterId ) model.counters }
     Modify id act ->
       let updateCounter (counterId, counterModel) =
-        if counterId == id then
-          (counterId, Counter.update act counterModel)
-        else
-          (counterId, counterModel)
+        if counterId == id
+          then (counterId, Counter.update act counterModel)
+          else (counterId, counterModel)
       in
         { model | counters = List.map updateCounter model.counters }
 
 -- View
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
-  let counters = List.map (viewCounter address) model.counters
-      remove = Html.button [ onClick address Remove ] [ Html.text "Remove" ]
-      add = Html.button [ onClick address Insert ] [ Html.text "Add" ]
+  let
+    add = Html.button [ onClick address Insert ] [ Html.text "Add" ]
+    counters = List.map (viewCounter address) model.counters
   in
-    Html.div [] ([remove, add] ++ counters)
+    Html.div [] (add :: counters)
 
 viewCounter : Signal.Address Action -> (ID, Counter.Model) -> Html.Html
 viewCounter address (id, model) =
-  Counter.view (Signal.forwardTo address (Modify id)) model
+  let
+    context = Counter.Context
+                (Signal.forwardTo address (Modify id))
+                (Signal.forwardTo address (always (Remove id)))
+  in
+    Counter.viewWithRemove context model
 
