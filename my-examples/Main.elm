@@ -1,6 +1,6 @@
-import CounterPair exposing (init, update, view)
+import CounterList exposing (init, update, view)
 import StartApp.Simple exposing (start)
 
-main = start { model = init 0 0,
-               update = CounterPair.update,
-               view = CounterPair.view }
+main = start { model = init,
+               update = CounterList.update,
+               view = CounterList.view }
