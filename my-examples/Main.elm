@@ -1,6 +1,14 @@
-import CounterList exposing (init, update, view)
-import StartApp.Simple exposing (start)
+import Effects exposing (Never)
+import RandomGif exposing (init, update, view)
+import StartApp
+import Task
 
-main = start { model = init,
-               update = CounterList.update,
-               view = CounterList.view }
+app = StartApp.start { init = init "puppies",
+               update = update,
+               view = view,
+               inputs = [] }
+
+main = app.html
+
+port tasks : Signal (Task.Task Never ())
+port tasks = app.tasks
